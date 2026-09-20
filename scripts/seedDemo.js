@@ -225,12 +225,27 @@ const seedDemoData = async () => {
     for (const uDef of userDefs) {
       let existingUser = await User.findOne({ email: uDef.email.toLowerCase().trim() });
       if (!existingUser) {
-        // Use new User() and save() to trigger bcrypt pre-save password encryption hook
+        // Create new demo user (triggers bcrypt pre-save hook)
         const newUser = new User(uDef);
         existingUser = await newUser.save();
         console.log(`  + Created demo account: ${uDef.email} [Role: ${uDef.role}]`);
       } else {
-        console.log(`  = Demo account already exists: ${uDef.email} [Role: ${existingUser.role}] (Preserved)`);
+        // Safely update existing demo account to guarantee credentials and role match documentation
+        existingUser.name = uDef.name;
+        existingUser.role = uDef.role;
+        existingUser.userType = uDef.userType;
+        existingUser.department = uDef.department;
+        existingUser.idNumber = uDef.idNumber;
+        existingUser.phone = uDef.phone;
+        existingUser.isActive = true;
+        if (uDef.assignedLabs && uDef.assignedLabs.length > 0) {
+          existingUser.assignedLabs = uDef.assignedLabs;
+        }
+
+        // Setting password triggers Mongoose pre('save') bcrypt hashing
+        existingUser.password = uDef.password;
+        await existingUser.save();
+        console.log(`  ↻ Synchronized & updated credentials for demo account: ${uDef.email} [Role: ${uDef.role}]`);
       }
       userMap[uDef.email] = existingUser;
     }

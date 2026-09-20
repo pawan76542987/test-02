@@ -188,7 +188,81 @@ async function runE2ETests() {
     assert(adminRouteRes.body.includes('403 - Access Denied'), 'Must render styled 403 error page');
   });
 
-  // Test 9: 404 Error Page
+  // Test 9: Lab In-Charge Login & Dashboard
+  await test('Lab In-Charge Login & Operations Dashboard', async () => {
+    const postData = 'email=incharge.cs%40labtrack.edu&password=Lab%4012345';
+    const loginRes = await request({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/auth/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, postData);
+
+    assert.strictEqual(loginRes.statusCode, 302);
+    const inchargeCookie = loginRes.headers['set-cookie'][0].split(';')[0];
+
+    const dashRes = await request({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/dashboard',
+      method: 'GET',
+      headers: { 'Cookie': inchargeCookie }
+    });
+    assert.strictEqual(dashRes.statusCode, 200);
+    assert(dashRes.body.includes('Laboratory Operations Dashboard'), 'Must render Lab In-Charge dashboard');
+  });
+
+  // Test 10: Staff / Researcher Login
+  await test('Staff / Researcher Login & Dashboard', async () => {
+    const postData = 'email=staff.priya%40labtrack.edu&password=User%4012345';
+    const loginRes = await request({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/auth/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, postData);
+
+    assert.strictEqual(loginRes.statusCode, 302);
+    const staffCookie = loginRes.headers['set-cookie'][0].split(';')[0];
+
+    const dashRes = await request({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/dashboard',
+      method: 'GET',
+      headers: { 'Cookie': staffCookie }
+    });
+    assert.strictEqual(dashRes.statusCode, 200);
+    assert(dashRes.body.includes('Welcome, Dr. Priya Nair'), 'Staff dashboard must greet user by name');
+  });
+
+  // Test 11: Invalid Login Rejection
+  await test('POST /auth/login with Invalid Password is rejected', async () => {
+    const postData = 'email=admin%40labtrack.edu&password=WrongPassword123!';
+    const loginRes = await request({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/auth/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, postData);
+
+    assert.strictEqual(loginRes.statusCode, 302);
+    assert.strictEqual(loginRes.headers.location, '/auth/login');
+  });
+
+  // Test 12: 404 Error Page
   await test('GET /non-existent-page renders styled 404 error page', async () => {
     const res = await request({
       hostname: '127.0.0.1',
