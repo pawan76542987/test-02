@@ -1,0 +1,141 @@
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Edit Equipment: <%= asset.name %></h2>
+      <p class="card-subtitle">Asset Tag: <strong><%= asset.assetTag %></strong></p>
+    </div>
+    <a href="/assets/<%= asset._id %>" class="btn btn-secondary btn-sm">Cancel</a>
+  </div>
+
+  <form action="/assets/<%= asset._id %>/edit" method="POST">
+    <!-- Basic Information -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Asset Tag (Permanent)</label>
+        <input 
+          type="text" 
+          class="form-input" 
+          value="<%= asset.assetTag %>" 
+          disabled 
+          style="background-color: var(--bg-subtle); font-family: monospace;"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="name" class="form-label required">Equipment Name</label>
+        <input 
+          type="text" 
+          id="name" 
+          name="name" 
+          class="form-input" 
+          value="<%= asset.name %>" 
+          required
+        >
+      </div>
+    </div>
+
+    <!-- Category & Lab Assignment -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category" class="form-label required">Asset Category</label>
+        <select id="category" name="category" class="form-select" required>
+          <% categories.forEach(function(cat) { %>
+            <option value="<%= cat._id %>" <%= asset.category.toString() === cat._id.toString() ? 'selected' : '' %>>
+              <%= cat.name %> (<%= cat.code %>)
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="lab" class="form-label required">Laboratory Location</label>
+        <select id="lab" name="lab" class="form-select" required>
+          <% labs.forEach(function(l) { %>
+            <option value="<%= l._id %>" <%= asset.lab.toString() === l._id.toString() ? 'selected' : '' %>>
+              <%= l.name %> - <%= l.building %> (Room <%= l.roomNumber %>)
+            </option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <!-- Inventory Quantities & Condition -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="totalQuantity" class="form-label required">Total Quantity</label>
+        <input 
+          type="number" 
+          id="totalQuantity" 
+          name="totalQuantity" 
+          class="form-input" 
+          min="<%= asset.issuedQuantity + asset.damagedQuantity + asset.maintenanceQuantity + asset.lostQuantity %>" 
+          value="<%= asset.totalQuantity %>" 
+          required
+        >
+        <span class="form-help">
+          Currently in use / issued / damaged: <strong><%= asset.issuedQuantity + asset.damagedQuantity + asset.maintenanceQuantity + asset.lostQuantity %></strong> units. Total cannot be less than this.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="condition" class="form-label required">Condition</label>
+        <select id="condition" name="condition" class="form-select" required>
+          <option value="good" <%= asset.condition === 'good' ? 'selected' : '' %>>Good (Fully Functional)</option>
+          <option value="fair" <%= asset.condition === 'fair' ? 'selected' : '' %>>Fair (Minor wear)</option>
+          <option value="damaged" <%= asset.condition === 'damaged' ? 'selected' : '' %>>Damaged</option>
+          <option value="under_maintenance" <%= asset.condition === 'under_maintenance' ? 'selected' : '' %>>Under Maintenance</option>
+          <option value="lost" <%= asset.condition === 'lost' ? 'selected' : '' %>>Lost</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Specifications -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="manufacturer" class="form-label">Manufacturer</label>
+        <input type="text" id="manufacturer" name="manufacturer" class="form-input" value="<%= asset.manufacturer || '' %>">
+      </div>
+
+      <div class="form-group">
+        <label for="modelNumber" class="form-label">Model Number</label>
+        <input type="text" id="modelNumber" name="modelNumber" class="form-input" value="<%= asset.modelNumber || '' %>">
+      </div>
+
+      <div class="form-group">
+        <label for="serialNumber" class="form-label">Serial Number</label>
+        <input type="text" id="serialNumber" name="serialNumber" class="form-input" value="<%= asset.serialNumber || '' %>">
+      </div>
+    </div>
+
+    <!-- Financial -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="cost" class="form-label">Unit Cost (INR / ₹)</label>
+        <input type="number" id="cost" name="cost" class="form-input" min="0" step="0.01" value="<%= asset.cost || 0 %>">
+      </div>
+
+      <div class="form-group">
+        <label for="purchaseDate" class="form-label">Procurement Date</label>
+        <input type="date" id="purchaseDate" name="purchaseDate" class="form-input" value="<%= asset.purchaseDate ? new Date(asset.purchaseDate).toISOString().split('T')[0] : '' %>">
+      </div>
+    </div>
+
+    <!-- Description & Specs -->
+    <div class="form-group">
+      <label for="description" class="form-label">Overview / Description</label>
+      <textarea id="description" name="description" class="form-textarea" rows="3"><%= asset.description || '' %></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="specifications" class="form-label">Technical Specifications</label>
+      <textarea id="specifications" name="specifications" class="form-textarea" rows="4"><%= asset.specifications || '' %></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="/assets/<%= asset._id %>" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        Save Asset Changes
+      </button>
+    </div>
+  </form>
+</div>

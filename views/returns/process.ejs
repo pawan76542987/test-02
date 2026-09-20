@@ -1,0 +1,152 @@
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Record Equipment Return & Condition Audit</h2>
+      <p class="card-subtitle">Request Code: <strong><%= request.requestCode %></strong> &bull; Equipment: <strong><%= request.asset?.name %></strong></p>
+    </div>
+    <a href="/requests/<%= request._id %>" class="btn btn-secondary btn-sm">Cancel</a>
+  </div>
+
+  <!-- Handover Context Callout -->
+  <div style="background-color: var(--bg-app); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; font-size: 0.86rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+    <div>
+      <span style="color: var(--text-muted); display: block;">Requester:</span>
+      <strong><%= request.requester?.name %></strong> (<%= request.requester?.email %>)
+    </div>
+    <div>
+      <span style="color: var(--text-muted); display: block;">Issued Quantity:</span>
+      <strong style="color: var(--color-primary); font-size: 1.05rem;"><%= request.requestedQuantity %> Unit(s)</strong>
+    </div>
+    <div>
+      <span style="color: var(--text-muted); display: block;">Expected Return Date:</span>
+      <strong><%= new Date(request.expectedReturnDate).toLocaleDateString() %></strong>
+      <% if (request.isOverdue) { %>
+        <span class="badge badge-danger" style="margin-left: 4px;">Overdue</span>
+      <% } %>
+    </div>
+    <div>
+      <span style="color: var(--text-muted); display: block;">Laboratory:</span>
+      <strong><%= request.lab?.name %></strong>
+    </div>
+  </div>
+
+  <form action="/returns/<%= request._id %>/return" method="POST" id="returnForm">
+    <input type="hidden" id="totalUnits" value="<%= request.requestedQuantity %>">
+
+    <!-- Overall Condition Assessment -->
+    <div class="form-group">
+      <label for="conditionSelect" class="form-label required">Primary Return Condition</label>
+      <select id="conditionSelect" name="condition" class="form-select" required>
+        <option value="ok" selected>✓ OK (Good Condition - Ready to Restock)</option>
+        <option value="damaged">⚠ Damaged (Requires Inspection / Repair)</option>
+        <option value="lost">❌ Lost / Missing (Inventory Adjustment)</option>
+      </select>
+      <span class="form-help">Sets the initial unit condition breakdown below.</span>
+    </div>
+
+    <!-- Unit-by-Unit Breakdown -->
+    <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px; background: #ffffff;">
+      <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px;">
+        Unit Breakdown (Must total <%= request.requestedQuantity %> units)
+      </h4>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="okUnits" class="form-label" style="color: var(--status-success);">Good / OK Units</label>
+          <input 
+            type="number" 
+            id="okUnits" 
+            name="okUnits" 
+            class="form-input" 
+            min="0" 
+            max="<%= request.requestedQuantity %>" 
+            value="<%= request.requestedQuantity %>" 
+            required 
+            onchange="validateUnitSum()"
+          >
+          <span class="form-help">Returned directly to Available stock.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="damagedUnits" class="form-label" style="color: var(--status-warning);">Damaged Units</label>
+          <input 
+            type="number" 
+            id="damagedUnits" 
+            name="damagedUnits" 
+            class="form-input" 
+            min="0" 
+            max="<%= request.requestedQuantity %>" 
+            value="0" 
+            required 
+            onchange="validateUnitSum()"
+          >
+          <span class="form-help">Moved to Damaged stock (not available).</span>
+        </div>
+
+        <div class="form-group">
+          <label for="lostUnits" class="form-label" style="color: var(--status-danger);">Lost Units</label>
+          <input 
+            type="number" 
+            id="lostUnits" 
+            name="lostUnits" 
+            class="form-input" 
+            min="0" 
+            max="<%= request.requestedQuantity %>" 
+            value="0" 
+            required 
+            onchange="validateUnitSum()"
+          >
+          <span class="form-help">Removed from active asset quantity.</span>
+        </div>
+      </div>
+
+      <div id="breakdownNotice" style="font-size: 0.82rem; font-weight: 600; color: var(--status-success);">
+        ✓ Breakdown sum matches total issued quantity (<%= request.requestedQuantity %> units).
+      </div>
+    </div>
+
+    <!-- Return Notes & Damage Observations -->
+    <div class="form-group">
+      <label for="returnNotes" class="form-label">Return Inspection Notes / Remarks</label>
+      <textarea 
+        id="returnNotes" 
+        name="returnNotes" 
+        class="form-textarea" 
+        rows="3" 
+        placeholder="Note physical condition, missing accessories, serial numbers verified, or any damage observations..."
+      ></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="/requests/<%= request._id %>" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" id="submitReturnBtn">
+        Confirm & Finalize Return
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function validateUnitSum() {
+    const total = parseInt(document.getElementById('totalUnits').value, 10);
+    const ok = parseInt(document.getElementById('okUnits').value, 10) || 0;
+    const damaged = parseInt(document.getElementById('damagedUnits').value, 10) || 0;
+    const lost = parseInt(document.getElementById('lostUnits').value, 10) || 0;
+    const sum = ok + damaged + lost;
+
+    const notice = document.getElementById('breakdownNotice');
+    const submitBtn = document.getElementById('submitReturnBtn');
+
+    if (sum === total) {
+      notice.textContent = `✓ Breakdown sum matches total issued quantity (${total} units).`;
+      notice.style.color = 'var(--status-success)';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    } else {
+      notice.textContent = `⚠ Breakdown sum is ${sum} units, but issued quantity is ${total} units. Please adjust numbers to match.`;
+      notice.style.color = 'var(--status-danger)';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+    }
+  }
+</script>

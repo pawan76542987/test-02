@@ -1,0 +1,84 @@
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Create Privileged Institutional Account</h2>
+      <p class="card-subtitle">Provision Lab In-Charge, Staff, or System Administrator credentials</p>
+    </div>
+    <a href="/admin/users" class="btn btn-secondary btn-sm">Cancel</a>
+  </div>
+
+  <form action="/admin/users/create" method="POST">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name" class="form-label required">Full Name</label>
+        <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Dr. Rajesh Verma" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label required">Email Address</label>
+        <input type="email" id="email" name="email" class="form-input" placeholder="e.g. rajesh.verma@labtrack.edu" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="role" class="form-label required">System Role</label>
+        <select id="role" name="role" class="form-select" required onchange="handleRoleChange()">
+          <option value="lab_incharge" selected>Lab In-Charge (Review & Issue Equipment)</option>
+          <option value="admin">System Administrator (Full Privileges)</option>
+          <option value="staff">Staff / Researcher</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="department" class="form-label">Department / School</label>
+        <input type="text" id="department" name="department" class="form-input" placeholder="e.g. Electronics & Comm. Eng.">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="password" class="form-label required">Initial Password</label>
+        <input type="password" id="password" name="password" class="form-input" placeholder="Min 6 characters" required minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label for="idNumber" class="form-label">Employee / Staff ID</label>
+        <input type="text" id="idNumber" name="idNumber" class="form-input" placeholder="e.g. EMP-2026-94">
+      </div>
+    </div>
+
+    <!-- Assigned Labs (For Lab In-charge) -->
+    <div class="form-group" id="assignedLabsGroup">
+      <label class="form-label">Assigned Laboratory Locations</label>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; padding: 14px; background: var(--bg-app); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <% labs.forEach(function(lab) { %>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+            <input type="checkbox" name="assignedLabs" value="<%= lab._id %>">
+            <span><%= lab.name %> (<%= lab.code %>)</span>
+          </label>
+        <% }); %>
+      </div>
+      <span class="form-help">Lab In-charges will manage equipment requests originating from selected laboratories.</span>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="/admin/users" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        Create User Account
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function handleRoleChange() {
+    const role = document.getElementById('role').value;
+    const group = document.getElementById('assignedLabsGroup');
+    if (role === 'lab_incharge') {
+      group.style.display = 'block';
+    } else {
+      group.style.display = 'none';
+    }
+  }
+</script>

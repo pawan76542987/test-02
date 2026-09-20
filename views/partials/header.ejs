@@ -1,0 +1,64 @@
+<header class="app-header">
+  <div class="header-left">
+    <!-- Mobile Hamburger Toggle -->
+    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="page-title-area">
+      <h1 class="page-main-title">
+        <% if (currentPath === '/dashboard') { %>
+          Dashboard
+        <% } else if (currentPath.startsWith('/assets')) { %>
+          Equipment Catalog
+        <% } else if (currentPath.startsWith('/requests')) { %>
+          Issue Requests
+        <% } else if (currentPath.startsWith('/maintenance')) { %>
+          Maintenance
+        <% } else if (currentPath.startsWith('/admin/users')) { %>
+          Users Directory
+        <% } else if (currentPath.startsWith('/admin/labs')) { %>
+          Laboratories
+        <% } else if (currentPath.startsWith('/admin/categories')) { %>
+          Categories
+        <% } else if (currentPath.startsWith('/reports')) { %>
+          Reports
+        <% } else if (currentPath.startsWith('/auth/profile')) { %>
+          My Account
+        <% } else { %>
+          LabTrack
+        <% } %>
+      </h1>
+      <span class="page-breadcrumbs">Institutional Asset Platform</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+      <a href="/assets/create" class="btn btn-primary btn-sm header-action-btn" title="Register New Equipment">
+        <span class="btn-icon">+</span>
+        <span class="btn-text">Add Asset</span>
+      </a>
+    <% } else if (currentUser) { %>
+      <a href="/requests/new" class="btn btn-primary btn-sm header-action-btn" title="Submit Equipment Request">
+        <span class="btn-icon">+</span>
+        <span class="btn-text">New Request</span>
+      </a>
+    <% } %>
+
+    <% if (currentUser) { %>
+      <a href="/auth/logout" class="btn btn-secondary btn-sm header-logout-btn" title="Sign Out">
+        <span class="btn-text">Sign Out</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </a>
+    <% } %>
+  </div>
+</header>

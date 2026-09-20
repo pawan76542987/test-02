@@ -1,0 +1,140 @@
+<aside class="app-sidebar" id="appSidebar">
+  <!-- Brand Area -->
+  <div class="sidebar-header">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+      <div class="brand-icon">LT</div>
+      <div class="brand-text">
+        <span class="brand-title">LabTrack</span>
+        <span class="brand-subtitle">Asset Management</span>
+      </div>
+    </div>
+
+    <!-- Mobile Close Button -->
+    <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation Links -->
+  <nav class="sidebar-nav">
+    <!-- Main Menu -->
+    <div class="nav-section">
+      <div class="nav-section-title">Core Operations</div>
+      <ul class="nav-list">
+        <li>
+          <a href="/dashboard" class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="/assets" class="nav-link <%= currentPath.startsWith('/assets') ? 'active' : '' %>">
+            <span class="nav-icon">📦</span>
+            <span>Equipment Catalog</span>
+          </a>
+        </li>
+        <li>
+          <a href="/requests" class="nav-link <%= currentPath.startsWith('/requests') ? 'active' : '' %>">
+            <span class="nav-icon">📋</span>
+            <span><%= currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge') ? 'Request Queue' : 'My Requests' %></span>
+          </a>
+        </li>
+
+        <% if (currentUser && (currentUser.role === 'student' || currentUser.role === 'staff')) { %>
+          <li>
+            <a href="/requests/new" class="nav-link <%= currentPath === '/requests/new' ? 'active' : '' %>">
+              <span class="nav-icon">➕</span>
+              <span>New Issue Request</span>
+            </a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+
+    <!-- Lab In-Charge & Admin Specific Menu -->
+    <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+      <div class="nav-section">
+        <div class="nav-section-title">Lab Management</div>
+        <ul class="nav-list">
+          <li>
+            <a href="/requests?status=issued" class="nav-link <%= currentPath === '/requests' && typeof activeStatus !== 'undefined' && activeStatus === 'issued' ? 'active' : '' %>">
+              <span class="nav-icon">🔄</span>
+              <span>Active Issues / Returns</span>
+            </a>
+          </li>
+          <li>
+            <a href="/requests?status=overdue" class="nav-link <%= currentPath === '/requests' && typeof activeStatus !== 'undefined' && activeStatus === 'overdue' ? 'active' : '' %>">
+              <span class="nav-icon">⏳</span>
+              <span>Overdue Monitor</span>
+            </a>
+          </li>
+          <li>
+            <a href="/maintenance" class="nav-link <%= currentPath.startsWith('/maintenance') ? 'active' : '' %>">
+              <span class="nav-icon">🔧</span>
+              <span>Maintenance Logs</span>
+            </a>
+          </li>
+          <li>
+            <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">
+              <span class="nav-icon">📈</span>
+              <span>Reports & Analytics</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    <% } %>
+
+    <!-- Admin Only System Control -->
+    <% if (currentUser && currentUser.role === 'admin') { %>
+      <div class="nav-section">
+        <div class="nav-section-title">System Administration</div>
+        <ul class="nav-list">
+          <li>
+            <a href="/admin/users" class="nav-link <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+              <span class="nav-icon">👥</span>
+              <span>User Directory</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/labs" class="nav-link <%= currentPath.startsWith('/admin/labs') ? 'active' : '' %>">
+              <span class="nav-icon">🏛</span>
+              <span>Laboratories & Rooms</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/categories" class="nav-link <%= currentPath.startsWith('/admin/categories') ? 'active' : '' %>">
+              <span class="nav-icon">🏷</span>
+              <span>Asset Categories</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    <% } %>
+  </nav>
+
+  <!-- Sidebar Footer with User Pill -->
+  <% if (currentUser) { %>
+    <div class="sidebar-footer">
+      <a href="/auth/profile" class="user-profile-pill" title="View Profile">
+        <div class="user-avatar">
+          <%= currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div class="user-info">
+          <span class="user-name"><%= currentUser.name %></span>
+          <span class="user-role-tag">
+            <% if (currentUser.role === 'admin') { %>
+              Administrator
+            <% } else if (currentUser.role === 'lab_incharge') { %>
+              Lab In-Charge
+            <% } else { %>
+              <%= currentUser.userType ? currentUser.userType.toUpperCase() : 'Requester' %>
+            <% } %>
+          </span>
+        </div>
+      </a>
+    </div>
+  <% } %>
+</aside>

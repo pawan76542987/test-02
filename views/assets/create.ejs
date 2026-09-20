@@ -1,0 +1,139 @@
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Register New Laboratory Asset</h2>
+      <p class="card-subtitle">Add new equipment, instruments, or computing assets into the institutional catalog</p>
+    </div>
+    <a href="/assets" class="btn btn-secondary btn-sm">Cancel</a>
+  </div>
+
+  <form action="/assets/create" method="POST">
+    <!-- Basic Information -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="assetTag" class="form-label required">Asset Tag / Identifier</label>
+        <input 
+          type="text" 
+          id="assetTag" 
+          name="assetTag" 
+          class="form-input" 
+          placeholder="e.g. LAB-IOT-001" 
+          required 
+          style="text-transform: uppercase; font-family: monospace;"
+        >
+        <span class="form-help">Must be a unique institutional asset identifier.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="name" class="form-label required">Equipment Name</label>
+        <input 
+          type="text" 
+          id="name" 
+          name="name" 
+          class="form-input" 
+          placeholder="e.g. Rigol DS1054Z Digital Oscilloscope 50MHz" 
+          required
+        >
+      </div>
+    </div>
+
+    <!-- Category & Lab Assignment -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category" class="form-label required">Asset Category</label>
+        <select id="category" name="category" class="form-select" required>
+          <option value="">-- Select Category --</option>
+          <% categories.forEach(function(cat) { %>
+            <option value="<%= cat._id %>"><%= cat.name %> (<%= cat.code %>)</option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="lab" class="form-label required">Laboratory & Location</label>
+        <select id="lab" name="lab" class="form-select" required>
+          <option value="">-- Select Laboratory --</option>
+          <% labs.forEach(function(l) { %>
+            <option value="<%= l._id %>"><%= l.name %> - <%= l.building %> (Room <%= l.roomNumber %>)</option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <!-- Inventory Quantities & Condition -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="totalQuantity" class="form-label required">Total Quantity</label>
+        <input 
+          type="number" 
+          id="totalQuantity" 
+          name="totalQuantity" 
+          class="form-input" 
+          min="1" 
+          value="1" 
+          required
+        >
+        <span class="form-help">Initial available stock will be set to this total.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="condition" class="form-label required">Initial Condition</label>
+        <select id="condition" name="condition" class="form-select" required>
+          <option value="good" selected>Good (Fully Functional)</option>
+          <option value="fair">Fair (Minor cosmetic wear)</option>
+          <option value="damaged">Damaged (Requires repair)</option>
+          <option value="under_maintenance">Under Maintenance</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Hardware / Manufacturer Specifications -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="manufacturer" class="form-label">Manufacturer / Brand</label>
+        <input type="text" id="manufacturer" name="manufacturer" class="form-input" placeholder="e.g. Rigol / Dell / Keysight">
+      </div>
+
+      <div class="form-group">
+        <label for="modelNumber" class="form-label">Model Number</label>
+        <input type="text" id="modelNumber" name="modelNumber" class="form-input" placeholder="e.g. DS1054Z">
+      </div>
+
+      <div class="form-group">
+        <label for="serialNumber" class="form-label">Serial Number</label>
+        <input type="text" id="serialNumber" name="serialNumber" class="form-input" placeholder="e.g. SN-89421-DS">
+      </div>
+    </div>
+
+    <!-- Financial & Procurement Details -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="cost" class="form-label">Unit Cost (INR / ₹)</label>
+        <input type="number" id="cost" name="cost" class="form-input" min="0" step="0.01" placeholder="e.g. 35000">
+      </div>
+
+      <div class="form-group">
+        <label for="purchaseDate" class="form-label">Procurement Date</label>
+        <input type="date" id="purchaseDate" name="purchaseDate" class="form-input">
+      </div>
+    </div>
+
+    <!-- Descriptions & Usage Notes -->
+    <div class="form-group">
+      <label for="description" class="form-label">Equipment Overview & Purpose</label>
+      <textarea id="description" name="description" class="form-textarea" rows="3" placeholder="Describe equipment features, intended use cases, safety instructions..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="specifications" class="form-label">Detailed Technical Specifications</label>
+      <textarea id="specifications" name="specifications" class="form-textarea" rows="4" placeholder="Channels: 4&#10;Bandwidth: 50 MHz&#10;Sampling Rate: 1 GSa/s&#10;Memory Depth: 24 Mpts"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="/assets" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        Register Asset in System
+      </button>
+    </div>
+  </form>
+</div>

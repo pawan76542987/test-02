@@ -1,0 +1,140 @@
+<!-- Maintenance Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <h2 style="font-size: 1.25rem; font-weight: 700;">Equipment Maintenance & Service Logs</h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">
+      Manage equipment repairs, vendor calibrations, and scheduled routine maintenance
+    </p>
+  </div>
+
+  <a href="/maintenance/create" class="btn btn-primary btn-sm">+ Schedule Maintenance</a>
+</div>
+
+<!-- Status Navigation Tabs -->
+<div class="scroll-tabs">
+  <a href="/maintenance?status=all" class="btn <%= activeStatus === 'all' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    All Logs (<%= counts.all %>)
+  </a>
+  <a href="/maintenance?status=scheduled" class="btn <%= activeStatus === 'scheduled' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Scheduled (<%= counts.scheduled %>)
+  </a>
+  <a href="/maintenance?status=in_progress" class="btn <%= activeStatus === 'in_progress' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    In Progress (<%= counts.in_progress %>)
+  </a>
+  <a href="/maintenance?status=completed" class="btn <%= activeStatus === 'completed' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Completed (<%= counts.completed %>)
+  </a>
+</div>
+
+<!-- Maintenance Records Table -->
+<% if (logs && logs.length > 0) { %>
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Service Date</th>
+          <th>Description & Scope</th>
+          <th>Technician / Vendor</th>
+          <th>Cost (₹)</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% logs.forEach(function(log) { %>
+          <tr>
+            <td>
+              <a href="/assets/<%= log.asset?._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                <%= log.asset?.name %>
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted);"><%= log.asset?.assetTag %></div>
+            </td>
+            <td>
+              <%= new Date(log.serviceDate).toLocaleDateString() %>
+              <% if (log.nextServiceDue) { %>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Next: <%= new Date(log.nextServiceDue).toLocaleDateString() %></div>
+              <% } %>
+            </td>
+            <td>
+              <div><%= log.description %></div>
+              <% if (log.notes) { %>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;"><%= log.notes %></div>
+              <% } %>
+            </td>
+            <td><%= log.technicianVendor %></td>
+            <td><strong>₹<%= (log.cost || 0).toLocaleString() %></strong></td>
+            <td>
+              <% if (log.status === 'completed') { %>
+                <span class="badge badge-success"><span class="badge-dot"></span>Completed</span>
+              <% } else if (log.status === 'in_progress') { %>
+                <span class="badge badge-info"><span class="badge-dot"></span>In Progress</span>
+              <% } else { %>
+                <span class="badge badge-warning"><span class="badge-dot"></span>Scheduled</span>
+              <% } %>
+            </td>
+            <td>
+              <div class="table-actions">
+                <% if (log.status !== 'completed') { %>
+                  <button class="btn btn-primary btn-sm" data-modal-target="updateStatusModal_<%= log._id %>">
+                    Update Status
+                  </button>
+                <% } else { %>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">Resolved</span>
+                <% } %>
+              </div>
+
+              <!-- Status Update Modal -->
+              <div class="modal-backdrop" id="updateStatusModal_<%= log._id %>">
+                <div class="modal-box">
+                  <div class="modal-header">
+                    <h3 class="modal-title">Update Maintenance Status</h3>
+                    <button class="modal-close-btn" data-modal-close>&times;</button>
+                  </div>
+                  <form action="/maintenance/<%= log._id %>/status" method="POST">
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label class="form-label required">Status</label>
+                        <select name="status" class="form-select" required>
+                          <option value="in_progress" <%= log.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                          <option value="completed">Completed (Repaired & Restored)</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Units to Restore to Available Stock (if Completed)</label>
+                        <input type="number" name="restoreQuantity" class="form-input" min="0" value="<%= log.asset?.maintenanceQuantity || 1 %>">
+                        <span class="form-help">Number of repaired units to return to available inventory.</span>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Resolution Notes / Service Summary</label>
+                        <textarea name="resolutionNotes" class="form-textarea" rows="3" placeholder="Describe replacement components, calibration values, or technician remarks..."></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save Status Update</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <%- include('../partials/pagination') %>
+  </div>
+<% } else { %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🔧</div>
+      <h3 class="empty-title">No Maintenance Records Found</h3>
+      <p class="empty-desc">No equipment service logs found for the selected filter.</p>
+      <a href="/maintenance/create" class="btn btn-primary btn-sm" style="margin-top: 12px;">Schedule Service Log</a>
+    </div>
+  </div>
+<% } %>

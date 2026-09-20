@@ -1,0 +1,166 @@
+<!-- Filter & Search Toolbar -->
+<div class="card" style="margin-bottom: 24px; padding: 20px;">
+  <form action="/assets" method="GET" style="display: flex; flex-direction: column; gap: 16px;">
+    <!-- Top Row: Search & Sort -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 200px; position: relative;">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-input" 
+          placeholder="Search by equipment name, tag, model, or manufacturer..." 
+          value="<%= filters.q || '' %>"
+        >
+      </div>
+
+      <div style="min-width: 160px;">
+        <select name="sort" class="form-select" onchange="this.form.submit()">
+          <option value="newest" <%= !filters.sort || filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+          <option value="name_asc" <%= filters.sort === 'name_asc' ? 'selected' : '' %>>Name (A - Z)</option>
+          <option value="name_desc" <%= filters.sort === 'name_desc' ? 'selected' : '' %>>Name (Z - A)</option>
+          <option value="qty_desc" <%= filters.sort === 'qty_desc' ? 'selected' : '' %>>Highest Stock</option>
+          <option value="tag_asc" <%= filters.sort === 'tag_asc' ? 'selected' : '' %>>Asset Tag</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm">Search</button>
+      <a href="/assets" class="btn btn-secondary btn-sm">Reset</a>
+    </div>
+
+    <!-- Bottom Row: Multi-Dropdown Filters -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Category</label>
+        <select name="category" class="form-select" onchange="this.form.submit()">
+          <option value="all">All Categories</option>
+          <% categories.forEach(function(cat) { %>
+            <option value="<%= cat._id %>" <%= filters.category === cat._id.toString() ? 'selected' : '' %>>
+              <%= cat.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Laboratory</label>
+        <select name="lab" class="form-select" onchange="this.form.submit()">
+          <option value="all">All Laboratories</option>
+          <% labs.forEach(function(l) { %>
+            <option value="<%= l._id %>" <%= filters.lab === l._id.toString() ? 'selected' : '' %>>
+              <%= l.name %> (<%= l.code %>)
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Condition</label>
+        <select name="condition" class="form-select" onchange="this.form.submit()">
+          <option value="all">All Conditions</option>
+          <option value="good" <%= filters.condition === 'good' ? 'selected' : '' %>>Good</option>
+          <option value="fair" <%= filters.condition === 'fair' ? 'selected' : '' %>>Fair</option>
+          <option value="damaged" <%= filters.condition === 'damaged' ? 'selected' : '' %>>Damaged</option>
+          <option value="under_maintenance" <%= filters.condition === 'under_maintenance' ? 'selected' : '' %>>Under Maintenance</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Availability</label>
+        <select name="availability" class="form-select" onchange="this.form.submit()">
+          <option value="" <%= !filters.availability ? 'selected' : '' %>>All Statuses</option>
+          <option value="in_stock" <%= filters.availability === 'in_stock' ? 'selected' : '' %>>In Stock (Available > 0)</option>
+          <option value="out_of_stock" <%= filters.availability === 'out_of_stock' ? 'selected' : '' %>>Out of Stock / Fully Issued</option>
+        </select>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Header & Add Button -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+  <div>
+    <h2 style="font-size: 1.2rem; font-weight: 700;">Laboratory Equipment Catalog</h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">
+      Found <strong><%= pagination.totalCount %></strong> equipment items
+    </p>
+  </div>
+
+  <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+    <a href="/assets/create" class="btn btn-primary btn-sm">+ Add New Asset</a>
+  <% } %>
+</div>
+
+<!-- Equipment Grid Cards -->
+<% if (assets && assets.length > 0) { %>
+  <div class="equipment-grid">
+    <% assets.forEach(function(asset) { %>
+      <div class="equipment-card">
+        <div>
+          <div class="equipment-card-top">
+            <span class="equipment-tag"><%= asset.assetTag %></span>
+            
+            <% if (asset.availableQuantity > 0) { %>
+              <span class="badge badge-success"><span class="badge-dot"></span>In Stock</span>
+            <% } else { %>
+              <span class="badge badge-danger"><span class="badge-dot"></span>Out of Stock</span>
+            <% } %>
+          </div>
+
+          <h3 class="equipment-title">
+            <a href="/assets/<%= asset._id %>" style="color: inherit; text-decoration: none;">
+              <%= asset.name %>
+            </a>
+          </h3>
+
+          <p class="equipment-desc"><%= asset.description || 'No description provided.' %></p>
+
+          <div class="equipment-meta-list">
+            <div class="meta-row">
+              <span class="meta-label">Category:</span>
+              <span class="meta-val"><%= asset.category?.name || 'Unassigned' %></span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Location:</span>
+              <span class="meta-val"><%= asset.lab?.name %> (<%= asset.lab?.roomNumber %>)</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Available / Total:</span>
+              <span class="meta-val <%= asset.availableQuantity > 3 ? 'available-high' : asset.availableQuantity > 0 ? 'available-low' : 'available-zero' %>">
+                <strong><%= asset.availableQuantity %></strong> / <%= asset.totalQuantity %> units
+              </span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Condition:</span>
+              <span class="meta-val" style="text-transform: capitalize;"><%= asset.condition.replace('_', ' ') %></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="equipment-card-footer">
+          <a href="/assets/<%= asset._id %>" class="btn btn-secondary btn-sm" style="flex: 1;">View Details</a>
+          
+          <% if (asset.availableQuantity > 0) { %>
+            <a href="/requests/new?assetId=<%= asset._id %>" class="btn btn-primary btn-sm" style="flex: 1;">Request Item</a>
+          <% } else { %>
+            <button class="btn btn-secondary btn-sm" disabled style="flex: 1; opacity: 0.6; cursor: not-allowed;">Unavailable</button>
+          <% } %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Reusable Pagination -->
+  <div style="margin-top: 24px;">
+    <%- include('../partials/pagination') %>
+  </div>
+
+<% } else { %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3 class="empty-title">No Equipment Found</h3>
+      <p class="empty-desc">No assets match your current search and filter criteria. Try resetting filters.</p>
+      <a href="/assets" class="btn btn-primary btn-sm" style="margin-top: 12px;">Reset All Filters</a>
+    </div>
+  </div>
+<% } %>

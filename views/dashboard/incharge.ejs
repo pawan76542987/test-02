@@ -1,0 +1,222 @@
+<!-- In-Charge Quick Header -->
+<div class="quick-action-banner">
+  <div class="quick-action-content">
+    <h2>Laboratory Operations Dashboard</h2>
+    <p>Review student/staff equipment requests, hand over authorized equipment, and inspect returned conditions.</p>
+  </div>
+  <div class="quick-action-buttons">
+    <a href="/requests?status=pending" class="btn btn-warning">Review Pending (<%= stats.pendingCount %>)</a>
+    <a href="/requests?status=approved" class="btn btn-primary">Ready to Issue (<%= stats.approvedCount %>)</a>
+  </div>
+</div>
+
+<!-- Key Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card stat-amber">
+    <div class="stat-icon-wrapper">📋</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.pendingCount %></span>
+      <span class="stat-label">Pending Approval</span>
+      <span class="stat-subtext">Action required</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-blue">
+    <div class="stat-icon-wrapper">🚀</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.approvedCount %></span>
+      <span class="stat-label">Approved (Ready to Issue)</span>
+      <span class="stat-subtext">Awaiting student pickup</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-purple">
+    <div class="stat-icon-wrapper">🔄</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.issuedUnits %></span>
+      <span class="stat-label">Units Currently Issued</span>
+      <span class="stat-subtext">Active borrowings</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-red">
+    <div class="stat-icon-wrapper">⏳</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.overdueCount %></span>
+      <span class="stat-label">Overdue Returns</span>
+      <span class="stat-subtext">Requires return prompt</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-green">
+    <div class="stat-icon-wrapper">✓</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.availableUnits %></span>
+      <span class="stat-label">Units Available</span>
+      <span class="stat-subtext">In storage</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-sky">
+    <div class="stat-icon-wrapper">🔧</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.damagedUnits %></span>
+      <span class="stat-label">Damaged Equipment</span>
+      <span class="stat-subtext">Scheduled for service</span>
+    </div>
+  </div>
+</div>
+
+<!-- Overdue Returns Section -->
+<% if (stats.overdueItems && stats.overdueItems.length > 0) { %>
+  <div class="card" style="margin-bottom: 28px; border-left: 4px solid var(--status-danger);">
+    <div class="card-header" style="border-bottom: 1px solid #fee2e2;">
+      <div>
+        <h3 class="card-title" style="color: var(--status-danger);">
+          ⚠ Overdue Equipment Returns (<%= stats.overdueItems.length %>)
+        </h3>
+        <p class="card-subtitle">Equipment past due return dates requiring immediate recovery</p>
+      </div>
+      <a href="/requests?status=overdue" class="btn btn-danger btn-sm">View All Overdue</a>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request Code</th>
+            <th>Equipment</th>
+            <th>Requester</th>
+            <th>Contact Phone</th>
+            <th>Due Date</th>
+            <th>Overdue By</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% stats.overdueItems.forEach(function(item) { %>
+            <tr>
+              <td>
+                <a href="/requests/<%= item._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                  <%= item.requestCode %>
+                </a>
+              </td>
+              <td>
+                <strong><%= item.asset?.name %></strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= item.asset?.assetTag %> (<%= item.requestedQuantity %> unit)</div>
+              </td>
+              <td>
+                <div><%= item.requester?.name %></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= item.requester?.department %></div>
+              </td>
+              <td><%= item.requester?.phone || item.requester?.email %></td>
+              <td><%= new Date(item.expectedReturnDate).toLocaleDateString() %></td>
+              <td>
+                <span class="badge badge-danger">
+                  <span class="badge-dot"></span>
+                  <%= item.daysOverdue %> Days
+                </span>
+              </td>
+              <td>
+                <a href="/returns/<%= item._id %>/process" class="btn btn-warning btn-sm">
+                  Record Return
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<!-- Requests Requiring Action -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Recent Equipment Requests</h3>
+      <p class="card-subtitle">Pending reviews, approvals, and issue fulfillment</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="/requests?status=pending" class="btn btn-secondary btn-sm">Pending Only</a>
+      <a href="/requests" class="btn btn-secondary btn-sm">View Full Queue</a>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Request Code</th>
+          <th>Equipment & Lab</th>
+          <th>Requester</th>
+          <th>Quantity</th>
+          <th>Return Due</th>
+          <th>Status</th>
+          <th>Quick Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (stats.recentRequests && stats.recentRequests.length > 0) { %>
+          <% stats.recentRequests.forEach(function(req) { %>
+            <tr>
+              <td>
+                <a href="/requests/<%= req._id %>" style="font-weight: 600; color: var(--color-primary); text-decoration: none;">
+                  <%= req.requestCode %>
+                </a>
+                <div style="font-size: 0.72rem; color: var(--text-muted);"><%= new Date(req.createdAt).toLocaleDateString() %></div>
+              </td>
+              <td>
+                <strong><%= req.asset?.name %></strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.lab?.name %></div>
+              </td>
+              <td>
+                <div><%= req.requester?.name %></div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);"><%= req.requester?.idNumber || req.requester?.email %></div>
+              </td>
+              <td><strong><%= req.requestedQuantity %></strong></td>
+              <td><%= new Date(req.expectedReturnDate).toLocaleDateString() %></td>
+              <td>
+                <% if (req.status === 'pending') { %>
+                  <span class="badge badge-warning"><span class="badge-dot"></span>Pending</span>
+                <% } else if (req.status === 'approved') { %>
+                  <span class="badge badge-info"><span class="badge-dot"></span>Approved</span>
+                <% } else if (req.status === 'issued') { %>
+                  <% if (req.isOverdue) { %>
+                    <span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>
+                  <% } else { %>
+                    <span class="badge badge-purple"><span class="badge-dot"></span>Issued</span>
+                  <% } %>
+                <% } else if (req.status === 'returned') { %>
+                  <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+                <% } else { %>
+                  <span class="badge badge-neutral"><%= req.status %></span>
+                <% } %>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a href="/requests/<%= req._id %>" class="btn btn-secondary btn-sm">Details</a>
+                  <% if (req.status === 'pending') { %>
+                    <form action="/requests/<%= req._id %>/approve" method="POST" style="display: inline;">
+                      <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                  <% } else if (req.status === 'approved') { %>
+                    <form action="/returns/<%= req._id %>/issue" method="POST" style="display: inline;">
+                      <button type="submit" class="btn btn-primary btn-sm">Issue Handover</button>
+                    </form>
+                  <% } else if (req.status === 'issued') { %>
+                    <a href="/returns/<%= req._id %>/process" class="btn btn-warning btn-sm">Return</a>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No active requests for your assigned laboratories.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

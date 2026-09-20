@@ -1,0 +1,87 @@
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Schedule Equipment Maintenance / Repair</h2>
+      <p class="card-subtitle">Log preventive servicing, calibration, or component repair for laboratory assets</p>
+    </div>
+    <a href="/maintenance" class="btn btn-secondary btn-sm">Cancel</a>
+  </div>
+
+  <% if (fromReturn) { %>
+    <div style="background-color: var(--status-warning-bg); border: 1px solid #fde68a; color: var(--status-warning-text); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 0.88rem;">
+      <strong>Notice:</strong> This service record is being created following a <strong>Damaged Return</strong> handover.
+    </div>
+  <% } %>
+
+  <form action="/maintenance/create" method="POST">
+    <!-- Equipment Selection -->
+    <div class="form-group">
+      <label for="assetId" class="form-label required">Select Equipment Asset</label>
+      <select id="assetId" name="assetId" class="form-select" required>
+        <option value="">-- Choose Asset --</option>
+        <% assets.forEach(function(a) { %>
+          <option value="<%= a._id %>" <%= selectedAsset && selectedAsset._id.toString() === a._id.toString() ? 'selected' : '' %>>
+            <%= a.name %> (<%= a.assetTag %>) &bull; Damaged: <%= a.damagedQuantity %>, Total: <%= a.totalQuantity %>
+          </option>
+        <% }); %>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <!-- Service Date -->
+      <div class="form-group">
+        <label for="serviceDate" class="form-label required">Service / Incident Date</label>
+        <input type="date" id="serviceDate" name="serviceDate" class="form-input" required value="<%= new Date().toISOString().split('T')[0] %>">
+      </div>
+
+      <!-- Technician / Vendor -->
+      <div class="form-group">
+        <label for="technicianVendor" class="form-label required">Technician or Vendor</label>
+        <input type="text" id="technicianVendor" name="technicianVendor" class="form-input" placeholder="e.g. In-house Lab Technician / Keysight India" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <!-- Estimated Cost -->
+      <div class="form-group">
+        <label for="cost" class="form-label">Estimated Service Cost (₹)</label>
+        <input type="number" id="cost" name="cost" class="form-input" min="0" step="0.01" placeholder="0">
+      </div>
+
+      <!-- Status -->
+      <div class="form-group">
+        <label for="status" class="form-label required">Maintenance Status</label>
+        <select id="status" name="status" class="form-select" required>
+          <option value="scheduled" selected>Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Next Service Due -->
+    <div class="form-group">
+      <label for="nextServiceDue" class="form-label">Next Calibration / Service Due Date (Optional)</label>
+      <input type="date" id="nextServiceDue" name="nextServiceDue" class="form-input">
+    </div>
+
+    <!-- Description of Issue / Service Scope -->
+    <div class="form-group">
+      <label for="description" class="form-label required">Description of Issue / Maintenance Scope</label>
+      <textarea id="description" name="description" class="form-textarea" rows="3" placeholder="Describe symptoms, faulty components, probe defects, or scheduled preventive maintenance checklist..." required></textarea>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-group">
+      <label for="notes" class="form-label">Technician Notes / Vendor Details (Optional)</label>
+      <textarea id="notes" name="notes" class="form-textarea" rows="2" placeholder="Vendor contact person, RMA numbers, warranty coverage notes..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="/maintenance" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        Record Maintenance Schedule
+      </button>
+    </div>
+  </form>
+</div>

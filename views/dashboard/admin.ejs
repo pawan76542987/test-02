@@ -1,0 +1,306 @@
+<!-- Quick Action Hero Banner -->
+<div class="quick-action-banner">
+  <div class="quick-action-content">
+    <h2>Institutional Lab Operations Command Center</h2>
+    <p>Centralized monitoring of equipment inventory, issue authorizations, return condition grading, and overdue tracking.</p>
+  </div>
+  <div class="quick-action-buttons">
+    <a href="/assets/create" class="btn btn-primary">+ New Equipment</a>
+    <a href="/requests" class="btn btn-secondary">Manage Requests</a>
+    <a href="/reports" class="btn btn-secondary">Generate Report</a>
+  </div>
+</div>
+
+<!-- Key Performance Indicator Cards (Real DB Aggregated) -->
+<div class="stats-grid">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon-wrapper">📦</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.totalUnits %></span>
+      <span class="stat-label">Total Equipment Units</span>
+      <span class="stat-subtext"><%= stats.totalAssets %> unique asset models</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-green">
+    <div class="stat-icon-wrapper">✓</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.availableUnits %></span>
+      <span class="stat-label">Available in Labs</span>
+      <span class="stat-subtext">Ready for checkout</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-purple">
+    <div class="stat-icon-wrapper">🔄</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.issuedUnits %></span>
+      <span class="stat-label">Currently Issued</span>
+      <span class="stat-subtext"><%= stats.issuedCount %> active borrowings</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-red">
+    <div class="stat-icon-wrapper">⏳</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.overdueCount %></span>
+      <span class="stat-label">Overdue Returns</span>
+      <span class="stat-subtext">Requires immediate follow-up</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-amber">
+    <div class="stat-icon-wrapper">📋</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.pendingCount %></span>
+      <span class="stat-label">Pending Requests</span>
+      <span class="stat-subtext"><%= stats.approvedCount %> awaiting issue handover</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-sky">
+    <div class="stat-icon-wrapper">🔧</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= stats.damagedUnits + stats.maintenanceUnits %></span>
+      <span class="stat-label">Damaged / In Repair</span>
+      <span class="stat-subtext"><%= stats.lostUnits %> recorded lost units</span>
+    </div>
+  </div>
+</div>
+
+<!-- Visual Analytics Charts Row -->
+<div class="dashboard-row equal">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Category Distribution</h3>
+        <p class="card-subtitle">Equipment breakdown by asset classification</p>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="categoryDistributionChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Laboratory Asset Utilization</h3>
+        <p class="card-subtitle">Total units vs currently issued per laboratory</p>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="labDistributionChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Overdue Returns Alert Section (if any overdue) -->
+<% if (stats.overdueList && stats.overdueList.length > 0) { %>
+  <div class="card" style="margin-bottom: 28px; border-left: 4px solid var(--status-danger);">
+    <div class="card-header" style="border-bottom: 1px solid #fee2e2;">
+      <div>
+        <h3 class="card-title" style="color: var(--status-danger); display: flex; align-items: center; gap: 8px;">
+          <span>⚠</span> Urgent: Overdue Equipment Handover (<%= stats.overdueList.length %>)
+        </h3>
+        <p class="card-subtitle">Items that have passed their expected return deadline</p>
+      </div>
+      <a href="/requests?status=overdue" class="btn btn-danger btn-sm">View All Overdue</a>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request Code</th>
+            <th>Equipment</th>
+            <th>Requester</th>
+            <th>Contact</th>
+            <th>Expected Return</th>
+            <th>Days Overdue</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% stats.overdueList.forEach(function(req) { %>
+            <tr>
+              <td>
+                <a href="/requests/<%= req._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                  <%= req.requestCode %>
+                </a>
+              </td>
+              <td>
+                <strong><%= req.asset?.name %></strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.asset?.assetTag %> (<%= req.requestedQuantity %> unit)</div>
+              </td>
+              <td>
+                <div><%= req.requester?.name %></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.requester?.department %></div>
+              </td>
+              <td>
+                <div><%= req.requester?.email %></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.requester?.phone || 'No phone' %></div>
+              </td>
+              <td><%= new Date(req.expectedReturnDate).toLocaleDateString() %></td>
+              <td>
+                <span class="badge badge-danger">
+                  <span class="badge-dot"></span>
+                  <%= req.daysOverdue %> Days
+                </span>
+              </td>
+              <td>
+                <a href="/returns/<%= req._id %>/process" class="btn btn-warning btn-sm">
+                  Record Return
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<!-- Recent Requests & Recent Returns -->
+<div class="dashboard-row equal">
+  <!-- Recent Requests Queue -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Recent Issue Requests</h3>
+        <p class="card-subtitle">Latest student and staff checkout requests</p>
+      </div>
+      <a href="/requests" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request</th>
+            <th>Equipment</th>
+            <th>Requester</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (stats.recentRequests && stats.recentRequests.length > 0) { %>
+            <% stats.recentRequests.forEach(function(req) { %>
+              <tr>
+                <td>
+                  <a href="/requests/<%= req._id %>" style="font-weight: 600; color: var(--color-primary); text-decoration: none;">
+                    <%= req.requestCode %>
+                  </a>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= new Date(req.createdAt).toLocaleDateString() %></div>
+                </td>
+                <td>
+                  <div style="font-weight: 600;"><%= req.asset?.name %></div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.lab?.name %></div>
+                </td>
+                <td>
+                  <%= req.requester?.name %>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= req.requester?.idNumber %></div>
+                </td>
+                <td>
+                  <% if (req.status === 'pending') { %>
+                    <span class="badge badge-warning"><span class="badge-dot"></span>Pending</span>
+                  <% } else if (req.status === 'approved') { %>
+                    <span class="badge badge-info"><span class="badge-dot"></span>Approved</span>
+                  <% } else if (req.status === 'issued') { %>
+                    <% if (req.isOverdue) { %>
+                      <span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>
+                    <% } else { %>
+                      <span class="badge badge-purple"><span class="badge-dot"></span>Issued</span>
+                    <% } %>
+                  <% } else if (req.status === 'returned') { %>
+                    <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+                  <% } else if (req.status === 'rejected') { %>
+                    <span class="badge badge-danger"><span class="badge-dot"></span>Rejected</span>
+                  <% } else { %>
+                    <span class="badge badge-neutral"><span class="badge-dot"></span><%= req.status %></span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No requests found.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Returns History -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Recent Handover & Returns</h3>
+        <p class="card-subtitle">Returned equipment condition audit</p>
+      </div>
+      <a href="/requests?status=returned" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Returned By</th>
+            <th>Return Date</th>
+            <th>Condition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (stats.recentReturns && stats.recentReturns.length > 0) { %>
+            <% stats.recentReturns.forEach(function(ret) { %>
+              <tr>
+                <td>
+                  <strong><%= ret.asset?.name %></strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);"><%= ret.asset?.assetTag %> (<%= ret.returnedQuantity || ret.requestedQuantity %> units)</div>
+                </td>
+                <td>
+                  <%= ret.requester?.name %>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= ret.requester?.email %></div>
+                </td>
+                <td>
+                  <%= ret.actualReturnDate ? new Date(ret.actualReturnDate).toLocaleDateString() : 'N/A' %>
+                </td>
+                <td>
+                  <% if (ret.returnCondition === 'ok') { %>
+                    <span class="badge badge-success"><span class="badge-dot"></span>OK</span>
+                  <% } else if (ret.returnCondition === 'damaged') { %>
+                    <span class="badge badge-danger"><span class="badge-dot"></span>Damaged</span>
+                  <% } else if (ret.returnCondition === 'lost') { %>
+                    <span class="badge badge-danger"><span class="badge-dot"></span>Lost</span>
+                  <% } else { %>
+                    <span class="badge badge-neutral">Standard</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No return records logged yet.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pass dynamic DB data to client Chart.js scripts -->
+<script>
+  window.categoryChartData = {
+    labels: <%- JSON.stringify(stats.categoryStats.map(c => c.name)) %>,
+    data: <%- JSON.stringify(stats.categoryStats.map(c => c.totalUnits)) %>
+  };
+
+  window.labChartData = {
+    labels: <%- JSON.stringify(stats.labStats.map(l => l.name)) %>,
+    total: <%- JSON.stringify(stats.labStats.map(l => l.totalUnits)) %>,
+    issued: <%- JSON.stringify(stats.labStats.map(l => l.issuedUnits)) %>
+  };
+</script>

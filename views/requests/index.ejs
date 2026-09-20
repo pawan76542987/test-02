@@ -1,0 +1,168 @@
+<!-- Request Navigation Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <h2 style="font-size: 1.25rem; font-weight: 700;">
+      <%= currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge') ? 'Equipment Requests & Issue Queue' : 'My Equipment Requests' %>
+    </h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">
+      Track approval status, handover state, and return dates
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 8px;">
+    <% if (currentUser && (currentUser.role === 'student' || currentUser.role === 'staff')) { %>
+      <a href="/requests/new" class="btn btn-primary btn-sm">+ Submit New Request</a>
+    <% } %>
+  </div>
+</div>
+
+<!-- Status Navigation Tabs -->
+<div class="scroll-tabs">
+  <a href="/requests?status=all" class="btn <%= activeStatus === 'all' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    All Requests (<%= counts.all %>)
+  </a>
+  <a href="/requests?status=pending" class="btn <%= activeStatus === 'pending' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Pending (<%= counts.pending %>)
+  </a>
+  <a href="/requests?status=approved" class="btn <%= activeStatus === 'approved' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Approved (<%= counts.approved %>)
+  </a>
+  <a href="/requests?status=issued" class="btn <%= activeStatus === 'issued' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Currently Issued (<%= counts.issued %>)
+  </a>
+  <a href="/requests?status=overdue" class="btn <%= activeStatus === 'overdue' ? 'btn-danger' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    ⚠ Overdue (<%= counts.overdue %>)
+  </a>
+  <a href="/requests?status=returned" class="btn <%= activeStatus === 'returned' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Returned (<%= counts.returned %>)
+  </a>
+  <a href="/requests?status=rejected" class="btn <%= activeStatus === 'rejected' ? 'btn-primary' : 'btn-secondary' %> btn-sm" style="border-radius: var(--radius-full);">
+    Rejected (<%= counts.rejected %>)
+  </a>
+</div>
+
+<!-- Search Bar -->
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form action="/requests" method="GET" style="display: flex; gap: 12px; align-items: center;">
+    <input type="hidden" name="status" value="<%= activeStatus %>">
+    <div style="flex: 1;">
+      <input 
+        type="text" 
+        name="q" 
+        class="form-input" 
+        placeholder="Search by Request Code (e.g. REQ-2026-0001) or purpose..." 
+        value="<%= searchQuery %>"
+      >
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    <a href="/requests?status=<%= activeStatus %>" class="btn btn-secondary btn-sm">Clear</a>
+  </form>
+</div>
+
+<!-- Requests Data Table -->
+<% if (requests && requests.length > 0) { %>
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Request Code</th>
+          <th>Equipment</th>
+          <th>Location</th>
+          <th>Requester</th>
+          <th>Qty</th>
+          <th>Expected Return</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% requests.forEach(function(req) { %>
+          <tr>
+            <td>
+              <a href="/requests/<%= req._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                <%= req.requestCode %>
+              </a>
+              <div style="font-size: 0.72rem; color: var(--text-muted);"><%= new Date(req.createdAt).toLocaleDateString() %></div>
+            </td>
+            <td>
+              <strong><%= req.asset?.name %></strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.asset?.assetTag %></div>
+            </td>
+            <td>
+              <div><%= req.lab?.name %></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.lab?.roomNumber %></div>
+            </td>
+            <td>
+              <div><%= req.requester?.name %></div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);"><%= req.requester?.idNumber || req.requester?.email %></div>
+            </td>
+            <td><strong><%= req.requestedQuantity %></strong></td>
+            <td>
+              <%= new Date(req.expectedReturnDate).toLocaleDateString() %>
+              <% if (req.isOverdue) { %>
+                <div style="color: var(--status-danger); font-size: 0.72rem; font-weight: 700;">
+                  <%= req.daysOverdue %>d OVERDUE
+                </div>
+              <% } %>
+            </td>
+            <td>
+              <% if (req.status === 'pending') { %>
+                <span class="badge badge-warning"><span class="badge-dot"></span>Pending</span>
+              <% } else if (req.status === 'approved') { %>
+                <span class="badge badge-info"><span class="badge-dot"></span>Approved</span>
+              <% } else if (req.status === 'issued') { %>
+                <% if (req.isOverdue) { %>
+                  <span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>
+                <% } else { %>
+                  <span class="badge badge-purple"><span class="badge-dot"></span>Issued</span>
+                <% } %>
+              <% } else if (req.status === 'returned') { %>
+                <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+              <% } else if (req.status === 'rejected') { %>
+                <span class="badge badge-danger"><span class="badge-dot"></span>Rejected</span>
+              <% } else if (req.status === 'cancelled') { %>
+                <span class="badge badge-neutral"><span class="badge-dot"></span>Cancelled</span>
+              <% } %>
+            </td>
+            <td>
+              <div class="table-actions">
+                <a href="/requests/<%= req._id %>" class="btn btn-secondary btn-sm">View</a>
+
+                <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+                  <% if (req.status === 'pending') { %>
+                    <form action="/requests/<%= req._id %>/approve" method="POST" style="display: inline;">
+                      <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                  <% } else if (req.status === 'approved') { %>
+                    <form action="/returns/<%= req._id %>/issue" method="POST" style="display: inline;">
+                      <button type="submit" class="btn btn-primary btn-sm">Issue</button>
+                    </form>
+                  <% } else if (req.status === 'issued') { %>
+                    <a href="/returns/<%= req._id %>/process" class="btn btn-warning btn-sm">Return</a>
+                  <% } %>
+                <% } else if (currentUser && req.status === 'pending') { %>
+                  <form action="/requests/<%= req._id %>/cancel" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <%- include('../partials/pagination') %>
+  </div>
+<% } else { %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3 class="empty-title">No Requests Found</h3>
+      <p class="empty-desc">There are currently no equipment requests matching the selected status or query.</p>
+      <% if (currentUser && (currentUser.role === 'student' || currentUser.role === 'staff')) { %>
+        <a href="/requests/new" class="btn btn-primary btn-sm" style="margin-top: 12px;">Submit an Equipment Request</a>
+      <% } %>
+    </div>
+  </div>
+<% } %>

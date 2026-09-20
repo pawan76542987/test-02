@@ -1,0 +1,41 @@
+<div class="toast-container">
+  <% if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) { %>
+    <% success_msg.forEach(function(msg) { %>
+      <div class="toast toast-success" role="alert">
+        <span class="toast-icon">✓</span>
+        <div class="toast-message"><%= msg %></div>
+        <button class="toast-close" type="button" aria-label="Close">✕</button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
+    <% error_msg.forEach(function(msg) { %>
+      <div class="toast toast-error" role="alert">
+        <span class="toast-icon">⚠</span>
+        <div class="toast-message"><%= msg %></div>
+        <button class="toast-close" type="button" aria-label="Close">✕</button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% if (typeof warning_msg !== 'undefined' && warning_msg && warning_msg.length > 0) { %>
+    <% warning_msg.forEach(function(msg) { %>
+      <div class="toast toast-warning" role="alert">
+        <span class="toast-icon">!</span>
+        <div class="toast-message"><%= msg %></div>
+        <button class="toast-close" type="button" aria-label="Close">✕</button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% if (typeof info_msg !== 'undefined' && info_msg && info_msg.length > 0) { %>
+    <% info_msg.forEach(function(msg) { %>
+      <div class="toast toast-info" role="alert">
+        <span class="toast-icon">ℹ</span>
+        <div class="toast-message"><%= msg %></div>
+        <button class="toast-close" type="button" aria-label="Close">✕</button>
+      </div>
+    <% }); %>
+  <% } %>
+</div>

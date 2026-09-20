@@ -1,0 +1,263 @@
+<!-- Asset Header & Quick Actions -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+      <span class="equipment-tag" style="font-size: 0.9rem; padding: 4px 10px;"><%= asset.assetTag %></span>
+      
+      <% if (asset.status === 'available') { %>
+        <span class="badge badge-success"><span class="badge-dot"></span>Available in Stock</span>
+      <% } else if (asset.status === 'in_use' || asset.status === 'partially_available') { %>
+        <span class="badge badge-purple"><span class="badge-dot"></span>In Use (<%= asset.issuedQuantity %> Issued)</span>
+      <% } else if (asset.status === 'under_maintenance') { %>
+        <span class="badge badge-warning"><span class="badge-dot"></span>Under Maintenance</span>
+      <% } else if (asset.status === 'out_of_stock') { %>
+        <span class="badge badge-danger"><span class="badge-dot"></span>Out of Stock</span>
+      <% } else { %>
+        <span class="badge badge-neutral"><%= asset.status %></span>
+      <% } %>
+
+      <span class="badge badge-neutral" style="text-transform: capitalize;">Condition: <%= asset.condition.replace('_', ' ') %></span>
+    </div>
+    <h1 style="font-size: 1.6rem; font-weight: 800;"><%= asset.name %></h1>
+    <p style="font-size: 0.88rem; color: var(--text-muted);">
+      <%= asset.category?.name %> &bull; <%= asset.lab?.name %> (<%= asset.lab?.building %> - Room <%= asset.lab?.roomNumber %>)
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <% if (asset.availableQuantity > 0) { %>
+      <a href="/requests/new?assetId=<%= asset._id %>" class="btn btn-primary">
+        + Request Equipment
+      </a>
+    <% } %>
+
+    <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+      <a href="/assets/<%= asset._id %>/edit" class="btn btn-secondary">
+        Edit Asset
+      </a>
+      <a href="/maintenance/create?assetId=<%= asset._id %>" class="btn btn-secondary">
+        Schedule Service
+      </a>
+    <% } %>
+
+    <% if (currentUser && currentUser.role === 'admin') { %>
+      <form action="/assets/<%= asset._id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this asset? This cannot be undone.');">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<!-- Real-Time Inventory Balance Grid -->
+<div class="stats-grid" style="margin-bottom: 28px;">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon-wrapper">📦</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= asset.totalQuantity %></span>
+      <span class="stat-label">Total Inventory</span>
+      <span class="stat-subtext">Registered assets</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-green">
+    <div class="stat-icon-wrapper">✓</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= asset.availableQuantity %></span>
+      <span class="stat-label">Available Now</span>
+      <span class="stat-subtext">Ready for issue</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-purple">
+    <div class="stat-icon-wrapper">🔄</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= asset.issuedQuantity %></span>
+      <span class="stat-label">Currently Issued</span>
+      <span class="stat-subtext">With students/staff</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-amber">
+    <div class="stat-icon-wrapper">🔧</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= asset.damagedQuantity + asset.maintenanceQuantity %></span>
+      <span class="stat-label">Damaged / Repair</span>
+      <span class="stat-subtext">Unusable stock</span>
+    </div>
+  </div>
+
+  <div class="stat-card stat-red">
+    <div class="stat-icon-wrapper">❌</div>
+    <div class="stat-content">
+      <span class="stat-value"><%= asset.lostQuantity %></span>
+      <span class="stat-label">Lost Units</span>
+      <span class="stat-subtext">Recorded loss tally</span>
+    </div>
+  </div>
+</div>
+
+<!-- Asset Details & Specifications Layout -->
+<div class="dashboard-row equal">
+  <!-- Asset Metadata Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Technical Specifications & Location</h3>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.9rem;">
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Manufacturer / Brand:</span>
+        <span class="meta-val"><%= asset.manufacturer || 'N/A' %></span>
+      </div>
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Model Number:</span>
+        <span class="meta-val"><%= asset.modelNumber || 'N/A' %></span>
+      </div>
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Serial Number:</span>
+        <span class="meta-val" style="font-family: monospace;"><%= asset.serialNumber || 'N/A' %></span>
+      </div>
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Laboratory Room:</span>
+        <span class="meta-val"><%= asset.lab?.name %> (<%= asset.lab?.building %> - Room <%= asset.lab?.roomNumber %>)</span>
+      </div>
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Lab In-Charge:</span>
+        <span class="meta-val"><%= asset.lab?.incharge?.name || 'Assigned Staff' %></span>
+      </div>
+      <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+        <span class="meta-label">Estimated Unit Cost:</span>
+        <span class="meta-val">₹<%= (asset.cost || 0).toLocaleString() %></span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Procurement Date:</span>
+        <span class="meta-val"><%= asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A' %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Description & Operational Guidelines -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Description & Usage Guidelines</h3>
+    </div>
+    <div style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6;">
+      <p style="margin-bottom: 16px;"><%= asset.description || 'No specific description provided for this equipment.' %></p>
+      
+      <% if (asset.specifications) { %>
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;">Detailed Specifications</h4>
+        <pre style="background: var(--bg-app); padding: 12px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid var(--border-color);"><%= asset.specifications %></pre>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Active Borrowers Currently Holding This Asset -->
+<% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+  <div class="card" style="margin-bottom: 28px;">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Currently Active Borrowers</h3>
+        <p class="card-subtitle">Students and staff members currently holding this equipment</p>
+      </div>
+      <span class="badge badge-purple"><%= activeIssues.length %> Active Issues</span>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request Code</th>
+            <th>Requester Name</th>
+            <th>Department / ID</th>
+            <th>Units Borrowed</th>
+            <th>Issue Date</th>
+            <th>Return Due Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (activeIssues && activeIssues.length > 0) { %>
+            <% activeIssues.forEach(function(iss) { %>
+              <tr>
+                <td>
+                  <a href="/requests/<%= iss._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                    <%= iss.requestCode %>
+                  </a>
+                </td>
+                <td>
+                  <div><%= iss.requester?.name %></div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= iss.requester?.email %></div>
+                </td>
+                <td>
+                  <%= iss.requester?.department %> (<%= iss.requester?.idNumber %>)
+                </td>
+                <td><strong><%= iss.requestedQuantity %></strong></td>
+                <td><%= iss.issueDate ? new Date(iss.issueDate).toLocaleDateString() : 'N/A' %></td>
+                <td>
+                  <%= new Date(iss.expectedReturnDate).toLocaleDateString() %>
+                  <% if (iss.isOverdue) { %>
+                    <span class="badge badge-danger" style="margin-left: 6px;"><%= iss.daysOverdue %>d Overdue</span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/returns/<%= iss._id %>/process" class="btn btn-warning btn-sm">Record Return</a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                No active borrowings for this equipment at this moment.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<!-- Maintenance History Log -->
+<% if (maintenanceLogs && maintenanceLogs.length > 0) { %>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Maintenance & Service Log History</h3>
+      <a href="/maintenance" class="btn btn-secondary btn-sm">View All Logs</a>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Service Date</th>
+            <th>Description</th>
+            <th>Technician / Vendor</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th>Logged By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% maintenanceLogs.forEach(function(m) { %>
+            <tr>
+              <td><%= new Date(m.serviceDate).toLocaleDateString() %></td>
+              <td><%= m.description %></td>
+              <td><%= m.technicianVendor %></td>
+              <td>₹<%= (m.cost || 0).toLocaleString() %></td>
+              <td>
+                <% if (m.status === 'completed') { %>
+                  <span class="badge badge-success"><span class="badge-dot"></span>Completed</span>
+                <% } else if (m.status === 'in_progress') { %>
+                  <span class="badge badge-info"><span class="badge-dot"></span>In Progress</span>
+                <% } else { %>
+                  <span class="badge badge-warning"><span class="badge-dot"></span>Scheduled</span>
+                <% } %>
+              </td>
+              <td><%= m.createdBy?.name || 'Staff' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>

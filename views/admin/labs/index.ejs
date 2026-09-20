@@ -1,0 +1,203 @@
+<!-- Labs Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <h2 style="font-size: 1.25rem; font-weight: 700;">Laboratories & Institutional Locations</h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">
+      Manage campus laboratory rooms, buildings, and assign faculty / staff in-charges
+    </p>
+  </div>
+
+  <button class="btn btn-primary btn-sm" data-modal-target="createLabModal">+ Add New Laboratory</button>
+</div>
+
+<!-- Labs Table -->
+<div class="card">
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Lab Code</th>
+          <th>Laboratory Name</th>
+          <th>Building & Room</th>
+          <th>Faculty / Staff In-Charge</th>
+          <th>Assets</th>
+          <th>Issued Units</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (labs && labs.length > 0) { %>
+          <% labs.forEach(function(lab) { %>
+            <tr>
+              <td>
+                <span class="equipment-tag"><%= lab.code %></span>
+              </td>
+              <td>
+                <strong><%= lab.name %></strong>
+                <div style="font-size: 0.72rem; color: var(--text-muted);"><%= lab.description || '' %></div>
+              </td>
+              <td>
+                <div><%= lab.building %></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Room: <%= lab.roomNumber %> (<%= lab.floor %>)</div>
+              </td>
+              <td>
+                <% if (lab.incharge) { %>
+                  <div style="font-weight: 600;"><%= lab.incharge.name %></div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= lab.incharge.email %></div>
+                <% } else { %>
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">Unassigned</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge badge-info"><%= (countMap[lab._id.toString()]?.count) || 0 %> Assets</span>
+              </td>
+              <td>
+                <strong><%= (countMap[lab._id.toString()]?.issued) || 0 %></strong> / <%= (countMap[lab._id.toString()]?.units) || 0 %>
+              </td>
+              <td>
+                <% if (lab.isActive) { %>
+                  <span class="badge badge-success"><span class="badge-dot"></span>Active</span>
+                <% } else { %>
+                  <span class="badge badge-danger"><span class="badge-dot"></span>Inactive</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-secondary btn-sm" data-modal-target="editLabModal_<%= lab._id %>">Edit</button>
+
+                  <form action="/admin/labs/<%= lab._id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete laboratory \'<%= lab.name %>\'?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </div>
+
+                <!-- Edit Lab Modal -->
+                <div class="modal-backdrop" id="editLabModal_<%= lab._id %>">
+                  <div class="modal-box">
+                    <div class="modal-header">
+                      <h3 class="modal-title">Edit Lab: <%= lab.name %></h3>
+                      <button class="modal-close-btn" data-modal-close>&times;</button>
+                    </div>
+                    <form action="/admin/labs/<%= lab._id %>/edit" method="POST">
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <label class="form-label required">Laboratory Name</label>
+                          <input type="text" name="name" class="form-input" value="<%= lab.name %>" required>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label class="form-label required">Building</label>
+                            <input type="text" name="building" class="form-input" value="<%= lab.building %>" required>
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label required">Room Number</label>
+                            <input type="text" name="roomNumber" class="form-input" value="<%= lab.roomNumber %>" required>
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label class="form-label">Floor</label>
+                            <input type="text" name="floor" class="form-input" value="<%= lab.floor %>">
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Lab In-Charge</label>
+                            <select name="incharge" class="form-select">
+                              <option value="">-- Select In-Charge --</option>
+                              <% inchargeUsers.forEach(function(u) { %>
+                                <option value="<%= u._id %>" <%= lab.incharge && lab.incharge._id.toString() === u._id.toString() ? 'selected' : '' %>>
+                                  <%= u.name %> (<%= u.role %>)
+                                </option>
+                              <% }); %>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Description</label>
+                          <textarea name="description" class="form-textarea" rows="2"><%= lab.description || '' %></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" name="isActive" value="true" <%= lab.isActive ? 'checked' : '' %>>
+                            <span>Active Laboratory</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">No laboratories found.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Lab Modal -->
+<div class="modal-backdrop" id="createLabModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Register New Laboratory Location</h3>
+      <button class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="/admin/labs" method="POST">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Lab Name</label>
+            <input type="text" name="name" class="form-input" placeholder="e.g. IoT & Embedded Systems Lab" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Lab Code</label>
+            <input type="text" name="code" class="form-input" placeholder="e.g. LAB-IOT" required style="text-transform: uppercase;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Building</label>
+            <input type="text" name="building" class="form-input" placeholder="e.g. Tech Block A" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Room Number</label>
+            <input type="text" name="roomNumber" class="form-input" placeholder="e.g. 302" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Floor</label>
+            <input type="text" name="floor" class="form-input" placeholder="e.g. 3rd Floor" value="Ground Floor">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assign In-Charge</label>
+            <select name="incharge" class="form-select">
+              <option value="">-- Select In-Charge --</option>
+              <% inchargeUsers.forEach(function(u) { %>
+                <option value="<%= u._id %>"><%= u.name %> (<%= u.role %>)</option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description & Focus Area</label>
+          <textarea name="description" class="form-textarea" rows="2" placeholder="Lab purpose, safety norms, research equipment focus..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Register Laboratory</button>
+      </div>
+    </form>
+  </div>
+</div>

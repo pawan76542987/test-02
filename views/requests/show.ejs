@@ -1,0 +1,343 @@
+<!-- Request Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+      <span class="equipment-tag" style="font-size: 0.95rem;"><%= request.requestCode %></span>
+      
+      <% if (request.status === 'pending') { %>
+        <span class="badge badge-warning"><span class="badge-dot"></span>Pending Review</span>
+      <% } else if (request.status === 'approved') { %>
+        <span class="badge badge-info"><span class="badge-dot"></span>Approved (Ready for Handover)</span>
+      <% } else if (request.status === 'issued') { %>
+        <% if (request.isOverdue) { %>
+          <span class="badge badge-danger"><span class="badge-dot"></span>Overdue (<%= request.daysOverdue %> Days)</span>
+        <% } else { %>
+          <span class="badge badge-purple"><span class="badge-dot"></span>Issued / In Use</span>
+        <% } %>
+      <% } else if (request.status === 'returned') { %>
+        <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+      <% } else if (request.status === 'rejected') { %>
+        <span class="badge badge-danger"><span class="badge-dot"></span>Rejected</span>
+      <% } else if (request.status === 'cancelled') { %>
+        <span class="badge badge-neutral"><span class="badge-dot"></span>Cancelled</span>
+      <% } %>
+    </div>
+    <h1 style="font-size: 1.5rem; font-weight: 800;">Equipment Borrowing Request</h1>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">
+      Submitted on <%= new Date(request.createdAt).toLocaleString() %>
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <a href="/requests" class="btn btn-secondary btn-sm">← Back to Requests</a>
+  </div>
+</div>
+
+<!-- Main Details Layout -->
+<div class="dashboard-row">
+  <!-- Left Column: Details & Audit Trail -->
+  <div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Equipment & Request Summary -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Equipment & Request Specifications</h3>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.9rem;">
+        <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <span class="meta-label">Requested Equipment:</span>
+          <span class="meta-val">
+            <a href="/assets/<%= request.asset?._id %>" style="color: var(--color-primary); text-decoration: none; font-weight: 700;">
+              <%= request.asset?.name %> (<%= request.asset?.assetTag %>)
+            </a>
+          </span>
+        </div>
+
+        <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <span class="meta-label">Laboratory Location:</span>
+          <span class="meta-val"><%= request.lab?.name %> (<%= request.lab?.building %> - Room <%= request.lab?.roomNumber %>)</span>
+        </div>
+
+        <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <span class="meta-label">Requested Quantity:</span>
+          <span class="meta-val"><strong><%= request.requestedQuantity %> unit(s)</strong></span>
+        </div>
+
+        <div class="meta-row" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <span class="meta-label">Expected Return Date:</span>
+          <span class="meta-val" style="color: <%= request.isOverdue ? 'var(--status-danger)' : 'inherit' %>; font-weight: 700;">
+            <%= new Date(request.expectedReturnDate).toLocaleDateString() %>
+            <% if (request.isOverdue) { %>
+              (OVERDUE BY <%= request.daysOverdue %> DAYS)
+            <% } %>
+          </span>
+        </div>
+
+        <div>
+          <span class="meta-label" style="display: block; margin-bottom: 6px;">Stated Purpose:</span>
+          <div style="background-color: var(--bg-app); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.92rem; line-height: 1.5;">
+            <%= request.purpose %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete Audit Trail & Timeline -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Lifecycle & Audit Trail</h3>
+      </div>
+
+      <div class="timeline">
+        <!-- 1. Request Created -->
+        <div class="timeline-item">
+          <div class="timeline-dot done"></div>
+          <div class="timeline-title">Request Created & Submitted</div>
+          <div class="timeline-time"><%= new Date(request.createdAt).toLocaleString() %></div>
+          <div class="timeline-detail">
+            Submitted by <strong><%= request.requester?.name %></strong> (<%= request.requester?.email %>)
+          </div>
+        </div>
+
+        <!-- 2. Review / Approval Step -->
+        <% if (request.reviewedAt) { %>
+          <div class="timeline-item">
+            <div class="timeline-dot <%= request.status === 'rejected' ? 'rejected' : 'done' %>"></div>
+            <div class="timeline-title">
+              <%= request.status === 'rejected' ? 'Request Rejected' : 'Request Approved' %>
+            </div>
+            <div class="timeline-time"><%= new Date(request.reviewedAt).toLocaleString() %></div>
+            <div class="timeline-detail">
+              Reviewed by <strong><%= request.reviewedBy?.name || 'Lab In-Charge' %></strong>
+              <% if (request.rejectionReason) { %>
+                <div style="margin-top: 6px; padding: 8px 12px; background: var(--status-danger-bg); border-left: 3px solid var(--status-danger); border-radius: 4px; color: var(--status-danger-text);">
+                  <strong>Rejection Reason:</strong> <%= request.rejectionReason %>
+                </div>
+              <% } %>
+              <% if (request.approvalNotes) { %>
+                <div style="margin-top: 6px; padding: 8px 12px; background: var(--status-info-bg); border-left: 3px solid var(--status-info); border-radius: 4px; color: var(--status-info-text);">
+                  <strong>Approval Notes:</strong> <%= request.approvalNotes %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- 3. Issue Handover Step -->
+        <% if (request.issueDate) { %>
+          <div class="timeline-item">
+            <div class="timeline-dot done"></div>
+            <div class="timeline-title">Equipment Handed Over / Issued</div>
+            <div class="timeline-time"><%= new Date(request.issueDate).toLocaleString() %></div>
+            <div class="timeline-detail">
+              Issued by <strong><%= request.issuedBy?.name || 'Lab Staff' %></strong>
+              <% if (request.issueNotes) { %>
+                <div style="margin-top: 4px; color: var(--text-muted); font-size: 0.82rem;">
+                  Handover Notes: <%= request.issueNotes %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- 4. Return Step -->
+        <% if (request.actualReturnDate) { %>
+          <div class="timeline-item">
+            <div class="timeline-dot done"></div>
+            <div class="timeline-title">Equipment Returned & Inspected</div>
+            <div class="timeline-time"><%= new Date(request.actualReturnDate).toLocaleString() %></div>
+            <div class="timeline-detail">
+              Received by <strong><%= request.receivedBy?.name || 'Lab Staff' %></strong>
+              <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="badge <%= request.returnCondition === 'ok' ? 'badge-success' : 'badge-danger' %>">
+                  Overall Condition: <%= request.returnCondition ? request.returnCondition.toUpperCase() : 'OK' %>
+                </span>
+                <% if (request.damagedUnits > 0) { %>
+                  <span class="badge badge-warning"><%= request.damagedUnits %> Damaged Units</span>
+                <% } %>
+                <% if (request.lostUnits > 0) { %>
+                  <span class="badge badge-danger"><%= request.lostUnits %> Lost Units</span>
+                <% } %>
+              </div>
+              <% if (request.returnNotes) { %>
+                <div style="margin-top: 6px; font-size: 0.84rem; color: var(--text-muted);">
+                  Return Notes: <%= request.returnNotes %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Action Controls & User Card -->
+  <div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Requester Profile Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Requester Information</h3>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem;">
+        <div style="font-weight: 700; font-size: 1.05rem;"><%= request.requester?.name %></div>
+        <div>
+          <span style="color: var(--text-muted);">Email:</span> <%= request.requester?.email %>
+        </div>
+        <div>
+          <span style="color: var(--text-muted);">ID / Roll No:</span> <%= request.requester?.idNumber || 'N/A' %>
+        </div>
+        <div>
+          <span style="color: var(--text-muted);">Department:</span> <%= request.requester?.department || 'N/A' %>
+        </div>
+        <div>
+          <span style="color: var(--text-muted);">Phone:</span> <%= request.requester?.phone || 'N/A' %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Panel -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Actions & Workflows</h3>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- PENDING STATUS ACTIONS -->
+        <% if (request.status === 'pending') { %>
+          <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+            <button class="btn btn-success" data-modal-target="approveModal" style="width: 100%;">
+              ✓ Approve Request
+            </button>
+            <button class="btn btn-danger" data-modal-target="rejectModal" style="width: 100%;">
+              ✕ Reject Request
+            </button>
+          <% } %>
+
+          <% if (currentUser && (request.requester?._id.toString() === currentUser._id.toString() || currentUser.role === 'admin')) { %>
+            <form action="/requests/<%= request._id %>/cancel" method="POST" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+              <button type="submit" class="btn btn-secondary" style="width: 100%; color: var(--status-danger);">
+                Cancel Request
+              </button>
+            </form>
+          <% } %>
+        <% } %>
+
+        <!-- APPROVED STATUS ACTIONS -->
+        <% if (request.status === 'approved') { %>
+          <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+            <button class="btn btn-primary" data-modal-target="issueModal" style="width: 100%;">
+              🚀 Handover & Issue Equipment
+            </button>
+          <% } else { %>
+            <div style="padding: 12px; background: var(--status-info-bg); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--status-info-text);">
+              Your request is APPROVED. Please visit <strong><%= request.lab?.name %></strong> to collect the equipment.
+            </div>
+          <% } %>
+        <% } %>
+
+        <!-- ISSUED STATUS ACTIONS -->
+        <% if (request.status === 'issued') { %>
+          <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'lab_incharge')) { %>
+            <a href="/returns/<%= request._id %>/process" class="btn btn-warning" style="width: 100%;">
+              🔄 Process Equipment Return
+            </a>
+          <% } else { %>
+            <div style="padding: 12px; background: var(--color-primary-subtle); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--color-primary);">
+              Equipment is currently in your possession. Expected return date: <strong><%= new Date(request.expectedReturnDate).toLocaleDateString() %></strong>.
+            </div>
+          <% } %>
+        <% } %>
+
+        <!-- RETURNED / REJECTED STATUS -->
+        <% if (request.status === 'returned') { %>
+          <div style="padding: 12px; background: var(--status-success-bg); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--status-success-text); text-align: center;">
+            ✓ Borrowing cycle completed successfully.
+          </div>
+        <% } %>
+
+        <% if (request.status === 'rejected') { %>
+          <div style="padding: 12px; background: var(--status-danger-bg); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--status-danger-text);">
+            This request was rejected.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODALS FOR IN-CHARGE ACTIONS ================= -->
+
+<!-- 1. Approve Modal -->
+<div class="modal-backdrop" id="approveModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Approve Equipment Request</h3>
+      <button class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="/requests/<%= request._id %>/approve" method="POST">
+      <div class="modal-body">
+        <p style="margin-bottom: 16px; font-size: 0.9rem;">
+          Are you sure you want to approve <strong><%= request.requestedQuantity %> unit(s)</strong> of <strong><%= request.asset?.name %></strong> for <%= request.requester?.name %>?
+        </p>
+        <div class="form-group">
+          <label class="form-label">Approval Notes / Pickup Instructions (Optional)</label>
+          <textarea name="approvalNotes" class="form-textarea" rows="3" placeholder="e.g. Please collect from Lab Table 4 before 4 PM..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-success">Confirm Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Reject Modal -->
+<div class="modal-backdrop" id="rejectModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" style="color: var(--status-danger);">Reject Equipment Request</h3>
+      <button class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="/requests/<%= request._id %>/reject" method="POST">
+      <div class="modal-body">
+        <p style="margin-bottom: 16px; font-size: 0.9rem;">
+          Please provide a reason for rejecting this request. The requester will be notified of this reason.
+        </p>
+        <div class="form-group">
+          <label class="form-label required">Rejection Reason</label>
+          <textarea name="rejectionReason" class="form-textarea" rows="3" required placeholder="e.g. Required for ongoing undergraduate examination / Insufficient available stock..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. Issue Handover Modal -->
+<div class="modal-backdrop" id="issueModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Issue Equipment Handover</h3>
+      <button class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="/returns/<%= request._id %>/issue" method="POST">
+      <div class="modal-body">
+        <p style="margin-bottom: 16px; font-size: 0.9rem;">
+          Confirming that <%= request.requestedQuantity %> unit(s) of <strong><%= request.asset?.name %></strong> have been physically handed over to <strong><%= request.requester?.name %></strong>.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Issue / Handover Notes (Optional)</label>
+          <textarea name="issueNotes" class="form-textarea" rows="2" placeholder="e.g. Handed over with power adapter and testing probes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Issue Handover</button>
+      </div>
+    </form>
+  </div>
+</div>

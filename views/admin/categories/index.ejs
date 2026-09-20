@@ -1,0 +1,138 @@
+<!-- Categories Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <h2 style="font-size: 1.25rem; font-weight: 700;">Asset Categories Management</h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted);">
+      Define and organize institutional equipment classifications
+    </p>
+  </div>
+
+  <button class="btn btn-primary btn-sm" data-modal-target="createCategoryModal">+ Add New Category</button>
+</div>
+
+<!-- Categories Table -->
+<div class="card">
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Category Code</th>
+          <th>Category Name</th>
+          <th>Description</th>
+          <th>Assets Registered</th>
+          <th>Total Units</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (categories && categories.length > 0) { %>
+          <% categories.forEach(function(cat) { %>
+            <tr>
+              <td>
+                <span class="equipment-tag"><%= cat.code %></span>
+              </td>
+              <td>
+                <strong><%= cat.name %></strong>
+              </td>
+              <td><%= cat.description || 'No description' %></td>
+              <td>
+                <span class="badge badge-info"><%= (countMap[cat._id.toString()]?.count) || 0 %> Assets</span>
+              </td>
+              <td>
+                <strong><%= (countMap[cat._id.toString()]?.units) || 0 %></strong> units
+              </td>
+              <td>
+                <% if (cat.isActive) { %>
+                  <span class="badge badge-success"><span class="badge-dot"></span>Active</span>
+                <% } else { %>
+                  <span class="badge badge-danger"><span class="badge-dot"></span>Inactive</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-secondary btn-sm" data-modal-target="editCatModal_<%= cat._id %>">Edit</button>
+
+                  <form action="/admin/categories/<%= cat._id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete category \'<%= cat.name %>\'?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </div>
+
+                <!-- Edit Category Modal -->
+                <div class="modal-backdrop" id="editCatModal_<%= cat._id %>">
+                  <div class="modal-box">
+                    <div class="modal-header">
+                      <h3 class="modal-title">Edit Category: <%= cat.name %></h3>
+                      <button class="modal-close-btn" data-modal-close>&times;</button>
+                    </div>
+                    <form action="/admin/categories/<%= cat._id %>/edit" method="POST">
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <label class="form-label required">Category Name</label>
+                          <input type="text" name="name" class="form-input" value="<%= cat.name %>" required>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Category Code (Permanent)</label>
+                          <input type="text" class="form-input" value="<%= cat.code %>" disabled style="background-color: var(--bg-subtle);">
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Description</label>
+                          <textarea name="description" class="form-textarea" rows="3"><%= cat.description || '' %></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" name="isActive" value="true" <%= cat.isActive ? 'checked' : '' %>>
+                            <span>Active Category</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No categories created yet.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Category Modal -->
+<div class="modal-backdrop" id="createCategoryModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Equipment Category</h3>
+      <button class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="/admin/categories" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label required">Category Name</label>
+          <input type="text" name="name" class="form-input" placeholder="e.g. Microcontrollers & Dev Boards" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Category Code</label>
+          <input type="text" name="code" class="form-input" placeholder="e.g. MCU" required style="text-transform: uppercase;">
+          <span class="form-help">Unique 3-6 letter code.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-textarea" rows="3" placeholder="Category purpose and item types..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Category</button>
+      </div>
+    </form>
+  </div>
+</div>

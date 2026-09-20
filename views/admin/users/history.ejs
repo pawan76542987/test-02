@@ -1,0 +1,84 @@
+<!-- Requester History Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 1.3rem; font-weight: 800;">Activity History: <%= targetUser.name %></h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">
+      <%= targetUser.email %> &bull; <%= targetUser.department || 'N/A' %> &bull; <%= targetUser.role.toUpperCase() %>
+    </p>
+  </div>
+  <a href="/admin/users" class="btn btn-secondary btn-sm">← Back to Users</a>
+</div>
+
+<!-- Requests Table for this user -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">All Borrowing & Issue Requests (<%= requests.length %>)</h3>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Request Code</th>
+          <th>Equipment</th>
+          <th>Lab</th>
+          <th>Qty</th>
+          <th>Request Date</th>
+          <th>Return Date</th>
+          <th>Status</th>
+          <th>Return Condition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (requests && requests.length > 0) { %>
+          <% requests.forEach(function(r) { %>
+            <tr>
+              <td>
+                <a href="/requests/<%= r._id %>" style="font-weight: 700; color: var(--color-primary); text-decoration: none;">
+                  <%= r.requestCode %>
+                </a>
+              </td>
+              <td><%= r.asset?.name %></td>
+              <td><%= r.lab?.name %></td>
+              <td><strong><%= r.requestedQuantity %></strong></td>
+              <td><%= new Date(r.createdAt).toLocaleDateString() %></td>
+              <td><%= r.actualReturnDate ? new Date(r.actualReturnDate).toLocaleDateString() : (r.expectedReturnDate ? new Date(r.expectedReturnDate).toLocaleDateString() : 'N/A') %></td>
+              <td>
+                <% if (r.status === 'returned') { %>
+                  <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+                <% } else if (r.status === 'issued') { %>
+                  <% if (r.isOverdue) { %>
+                    <span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>
+                  <% } else { %>
+                    <span class="badge badge-purple"><span class="badge-dot"></span>Issued</span>
+                  <% } %>
+                <% } else if (r.status === 'approved') { %>
+                  <span class="badge badge-info">Approved</span>
+                <% } else if (r.status === 'pending') { %>
+                  <span class="badge badge-warning">Pending</span>
+                <% } else { %>
+                  <span class="badge badge-neutral"><%= r.status %></span>
+                <% } %>
+              </td>
+              <td>
+                <% if (r.returnCondition) { %>
+                  <span class="badge <%= r.returnCondition === 'ok' ? 'badge-success' : 'badge-danger' %>">
+                    <%= r.returnCondition.toUpperCase() %>
+                  </span>
+                <% } else { %>
+                  <span style="color: var(--text-muted); font-size: 0.78rem;">-</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              This user has not submitted any equipment requests yet.
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

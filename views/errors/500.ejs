@@ -1,0 +1,16 @@
+<div class="card" style="max-width: 650px; margin: 40px auto; text-align: center; padding: 48px 32px;">
+  <div style="font-size: 64px; color: var(--status-danger); margin-bottom: 16px;">💥</div>
+  <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 8px;"><%= typeof title !== 'undefined' ? title : '500 - Server Error' %></h1>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+    <%= typeof message !== 'undefined' ? message : 'An unexpected server error occurred while processing your request.' %>
+  </p>
+
+  <% if (typeof stack !== 'undefined' && stack) { %>
+    <pre style="text-align: left; background: var(--bg-app); padding: 16px; border-radius: var(--radius-md); font-size: 0.75rem; overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); color: var(--status-danger);"><%= stack %></pre>
+  <% } %>
+
+  <div style="display: flex; gap: 12px; justify-content: center;">
+    <a href="/dashboard" class="btn btn-primary">Return to Dashboard</a>
+    <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+  </div>
+</div>
