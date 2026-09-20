@@ -12,11 +12,11 @@ const startServer = async () => {
 
     const server = http.createServer(app);
 
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`=======================================================`);
       console.log(`🚀 LabTrack Asset Management System`);
       console.log(`🌐 Server running in [${process.env.NODE_ENV || 'development'}] mode`);
-      console.log(`🔗 Local URL: http://localhost:${PORT}`);
+      console.log(`🔗 Local URL: http://0.0.0.0:${PORT}`);
       console.log(`=======================================================`);
     });
 

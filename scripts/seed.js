@@ -15,6 +15,12 @@ const connectDB = async () => {
 
 const seedDatabase = async () => {
   try {
+    if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force-prod')) {
+      console.error('⛔ [Seed Warning] You are running in PRODUCTION mode without --force-prod.');
+      console.error('To populate a production database, run: NODE_ENV=production node scripts/seed.js --force-prod');
+      process.exit(1);
+    }
+
     await connectDB();
 
     console.log('[Seed] Purging existing database collections...');

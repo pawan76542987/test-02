@@ -23,6 +23,11 @@ const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
+// Enable trust proxy for Render / Reverse Proxy HTTPS Secure Cookies
+if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
 // Security Headers with Helmet
 app.use(
   helmet({
